@@ -601,7 +601,7 @@
 
     <script>
         // ===== Google Sheets Config =====
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXFoMTidSPjkaop44AZ9YvPbsP4npRKhqu0GQ1CpxxE6kl0ewEqYdqU9CBYc2uufCaoA/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwc3YHONNlLTmkJ6h3qnFkzs1ysRlzBgBj_4805gEcXUx-92fwN7MYKZJPF_sX-tCPL4g/exec';
 
         // Data
         let customersData = { lastSync: null, customers: [] };
@@ -984,87 +984,36 @@
         // Powerlink API config
         const POWERLINK_TOKEN = 'd7e7dda4-c054-4545-b951-1a3d5a393c07';
         const POWERLINK_API_URL = 'https://api.powerlink.co.il/api/query';
-        const CORS_PROXY = 'https://corsproxy.io/?url=';
 
-        // Fetch a single page of customers from Powerlink
-        async function fetchCustomerPage(pageNumber) {
-            const response = await fetch(CORS_PROXY + encodeURIComponent(POWERLINK_API_URL), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'tokenid': POWERLINK_TOKEN
-                },
-                body: JSON.stringify({
-                    objecttype: 1,
-                    page_size: 500,
-                    page_number: pageNumber,
-                    fields: 'accountid,accountname,telephone1,emailaddress1,accountnumber',
-                    query: '',
-                    sort_by: 'accountname',
-                    sort_type: 'asc'
-                })
-            });
-
-            if (!response.ok) throw new Error('API Error: ' + response.status);
-            return await response.json();
-        }
-
-        // Sync all customers from Powerlink with pagination
+        // Sync customers from Powerlink via Google Apps Script (server-side, no CORS issues)
         async function syncCustomers() {
             const btn = document.getElementById('sync-btn');
             const statusEl = document.getElementById('sync-status');
             btn.disabled = true;
             btn.textContent = '⏳ מסנכרן...';
-            statusEl.textContent = 'מתחיל סנכרון...';
+            statusEl.textContent = 'מסנכרן מ-Powerlink דרך השרת...';
 
             try {
-                let allRecords = [];
-                let pageNumber = 1;
-                let isLastPage = false;
-
-                while (!isLastPage) {
-                    statusEl.textContent = `טוען עמוד ${pageNumber}...`;
-                    const result = await fetchCustomerPage(pageNumber);
-
-                    if (!result.success) throw new Error(result.message || 'שגיאה בתשובת ה-API');
-
-                    const records = result.data.Data || [];
-                    allRecords = allRecords.concat(records);
-                    isLastPage = result.data.IsLastPage;
-                    pageNumber++;
-                }
-
-                statusEl.textContent = `עיבוד ${allRecords.length} לקוחות...`;
-
-                // Update customers data
-                allRecords.forEach(acc => {
-                    const plId = acc.accountid;
-                    const existingIndex = customersData.customers.findIndex(
-                        c => c.powerlinkId === plId
-                    );
-
-                    const customer = {
-                        id: existingIndex >= 0 ? customersData.customers[existingIndex].id : 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                        powerlinkId: plId,
-                        name: acc.accountname || 'ללא שם',
-                        phone: acc.telephone1 || '',
-                        email: acc.emailaddress1 || '',
-                        accountNumber: acc.accountnumber || '',
-                        source: 'powerlink'
-                    };
-
-                    if (existingIndex >= 0) {
-                        customersData.customers[existingIndex] = customer;
-                    } else {
-                        customersData.customers.push(customer);
-                    }
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'syncFromPowerlink',
+                        token: POWERLINK_TOKEN,
+                        apiUrl: POWERLINK_API_URL
+                    })
                 });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error || 'Sync failed');
 
-                customersData.lastSync = new Date().toISOString();
+                customersData = {
+                    lastSync: result.data.lastSync,
+                    customers: result.data.customers
+                };
+                localStorage.setItem('pl_customers', JSON.stringify(customersData));
                 renderAll();
-                saveData('customers.json', customersData);
-                statusEl.textContent = `סנכרון הושלם - ${allRecords.length} לקוחות נטענו`;
-                alert(`סנכרון הושלם! ${allRecords.length} לקוחות נטענו.`);
+                statusEl.textContent = `סנכרון הושלם - ${result.data.count} לקוחות נטענו`;
+                alert(`סנכרון הושלם! ${result.data.count} לקוחות נטענו.`);
 
             } catch (error) {
                 console.error('Sync error:', error);
