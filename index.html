@@ -601,7 +601,7 @@
 
     <script>
         // ===== Google Sheets Config =====
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYEAm1dUti02wkDWEGyYGsHVDOuFYflqkt9SGYMGea-GPm4K6I1f0mUrelI-U46P2vAA/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaRblgzWSEa2y_VDmOS0htyhp7aY8mGZhQp49QLdqtUPYzXnRUVwyOqR18HFgkzpGO4w/exec';
 
         // Data
         let customersData = { lastSync: null, customers: [] };
@@ -981,11 +981,8 @@
             saveData('requests.json', requestsData);
         }
         
-        // Powerlink API config
-        const POWERLINK_TOKEN = 'd7e7dda4-c054-4545-b951-1a3d5a393c07';
-        const POWERLINK_API_URL = 'https://api.powerlink.co.il/api/query';
-
         // Sync customers from Powerlink via Google Apps Script (server-side, no CORS issues)
+        // Token and API URL are stored securely in Apps Script Script Properties
         async function syncCustomers() {
             const btn = document.getElementById('sync-btn');
             const statusEl = document.getElementById('sync-status');
@@ -998,9 +995,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
-                        action: 'syncFromPowerlink',
-                        token: POWERLINK_TOKEN,
-                        apiUrl: POWERLINK_API_URL
+                        action: 'syncFromPowerlink'
                     })
                 });
                 const result = await response.json();
