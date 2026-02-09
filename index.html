@@ -1079,35 +1079,7 @@
             saveData('requests.json', requestsData);
         }
         
-        // Powerlink API config
-        const POWERLINK_TOKEN = 'd7e7dda4-c054-4545-b951-1a3d5a393c07';
-        const POWERLINK_API_URL = 'https://api.powerlink.co.il/api/query';
-        const CORS_PROXY = 'https://corsproxy.io/?url=';
-
-        // Fetch a single page of customers from Powerlink
-        async function fetchCustomerPage(pageNumber) {
-            const response = await fetch(CORS_PROXY + encodeURIComponent(POWERLINK_API_URL), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'tokenid': POWERLINK_TOKEN
-                },
-                body: JSON.stringify({
-                    objecttype: 1,
-                    page_size: 500,
-                    page_number: pageNumber,
-                    fields: 'accountid,accountname,telephone1,emailaddress1,accountnumber',
-                    query: '',
-                    sort_by: 'accountname',
-                    sort_type: 'asc'
-                })
-            });
-
-            if (!response.ok) throw new Error('API Error: ' + response.status);
-            return await response.json();
-        }
-
-        // Sync all customers from Powerlink with pagination
+        // Sync customers via Google Apps Script (server-side Powerlink API call)
         async function syncCustomers() {
             const btn = document.getElementById('sync-btn');
             const statusEl = document.getElementById('sync-status');
@@ -1116,22 +1088,11 @@
             statusEl.textContent = 'מתחיל סנכרון...';
 
             try {
-                let allRecords = [];
-                let pageNumber = 1;
-                let isLastPage = false;
+                const syncUrl = GOOGLE_SCRIPT_URL + '?action=syncPowerlink';
+                const result = await fetchGoogleScript(syncUrl);
+                if (!result.success) throw new Error(result.error || 'שגיאה בסנכרון');
 
-                while (!isLastPage) {
-                    statusEl.textContent = `טוען עמוד ${pageNumber}...`;
-                    const result = await fetchCustomerPage(pageNumber);
-
-                    if (!result.success) throw new Error(result.message || 'שגיאה בתשובת ה-API');
-
-                    const records = result.data.Data || [];
-                    allRecords = allRecords.concat(records);
-                    isLastPage = result.data.IsLastPage;
-                    pageNumber++;
-                }
-
+                const allRecords = result.data;
                 statusEl.textContent = `עיבוד ${allRecords.length} לקוחות...`;
 
                 // Update customers data

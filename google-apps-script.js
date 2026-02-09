@@ -50,6 +50,40 @@ function doGet(e) {
       }
     }
 
+    // Sync customers from Powerlink API (server-side, no CORS issues)
+    if (params.action === 'syncPowerlink') {
+      const token = 'd7e7dda4-c054-4545-b951-1a3d5a393c07';
+      const apiUrl = 'https://api.powerlink.co.il/api/query';
+      var allRecords = [];
+      var pageNumber = 1;
+      var isLastPage = false;
+
+      while (!isLastPage) {
+        var resp = UrlFetchApp.fetch(apiUrl, {
+          method: 'post',
+          contentType: 'application/json',
+          headers: { 'tokenid': token },
+          payload: JSON.stringify({
+            objecttype: 1,
+            page_size: 500,
+            page_number: pageNumber,
+            fields: 'accountid,accountname,telephone1,emailaddress1,accountnumber',
+            query: '',
+            sort_by: 'accountname',
+            sort_type: 'asc'
+          })
+        });
+        var result = JSON.parse(resp.getContentText());
+        if (!result.success) throw new Error(result.message || 'Powerlink API error');
+        allRecords = allRecords.concat(result.data.Data || []);
+        isLastPage = result.data.IsLastPage;
+        pageNumber++;
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ success: true, data: allRecords }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const result = {
       customers: readSheet(ss, 'customers'),
       features: readSheet(ss, 'features'),
