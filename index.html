@@ -706,10 +706,18 @@
             try {
                 const resp = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
+                    redirect: 'follow',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'login', mail: email, password: password })
                 });
-                const result = await resp.json();
+                const text = await resp.text();
+                console.log('Login response:', resp.status, text);
+                let result;
+                try { result = JSON.parse(text); } catch(pe) {
+                    errorEl.textContent = 'שגיאה: התשובה מהשרת לא תקינה (status ' + resp.status + ')';
+                    errorEl.style.display = 'block';
+                    return;
+                }
 
                 if (result.success) {
                     sessionStorage.setItem('loggedInUser', email);
@@ -719,7 +727,8 @@
                     errorEl.style.display = 'block';
                 }
             } catch (e) {
-                errorEl.textContent = 'שגיאת תקשורת, נסה שוב';
+                console.error('Login error:', e);
+                errorEl.textContent = 'שגיאת תקשורת: ' + e.message;
                 errorEl.style.display = 'block';
             } finally {
                 btn.disabled = false;
