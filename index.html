@@ -685,6 +685,20 @@
     <script>
         // ===== Google Sheets Config =====
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_wTPCy-4dC9QzehS39ZhUEgaavNkhTVQhi_jdPwVA06YEmvAbvKOdhzv6mmKtQNxAew/exec';
+        const GOOGLE_CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+
+        // Fetch from Google Apps Script with CORS proxy fallback
+        async function fetchGoogleScript(url) {
+            try {
+                const resp = await fetch(url);
+                return await resp.json();
+            } catch (e) {
+                console.log('Direct fetch failed, trying proxy...', e.message);
+            }
+            const proxyUrl = GOOGLE_CORS_PROXY + encodeURIComponent(url);
+            const resp = await fetch(proxyUrl);
+            return await resp.json();
+        }
 
         // ===== Login =====
         async function login() {
@@ -705,8 +719,7 @@
 
             try {
                 const loginUrl = GOOGLE_SCRIPT_URL + '?action=login&mail=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password);
-                const resp = await fetch(loginUrl);
-                const result = await resp.json();
+                const result = await fetchGoogleScript(loginUrl);
 
                 if (result.success) {
                     sessionStorage.setItem('loggedInUser', email);
@@ -786,8 +799,7 @@
             if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_SCRIPT_URL_HERE') return;
 
             try {
-                const resp = await fetch(GOOGLE_SCRIPT_URL);
-                const result = await resp.json();
+                const result = await fetchGoogleScript(GOOGLE_SCRIPT_URL);
                 if (result.success) {
                     customersData = {
                         lastSync: result.data.lastSync,
@@ -829,11 +841,12 @@
                 payload.data = data.requests;
             }
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            }).catch(e => console.log('Save to Google Sheets failed:', e));
+            const postBody = JSON.stringify(payload);
+            const postOpts = { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: postBody };
+            fetch(GOOGLE_SCRIPT_URL, postOpts).catch(() => {
+                fetch(GOOGLE_CORS_PROXY + encodeURIComponent(GOOGLE_SCRIPT_URL), postOpts)
+                    .catch(e => console.log('Save to Google Sheets failed:', e));
+            });
         }
         
         // Tab switching
