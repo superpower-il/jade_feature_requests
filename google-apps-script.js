@@ -27,6 +27,21 @@
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const params = e.parameter || {};
+
+    // Login action via GET
+    if (params.action === 'login') {
+      const users = readSheet(ss, 'users');
+      const user = users.find(u => u.mail === params.mail && String(u.password) === params.password);
+      if (user) {
+        return ContentService.createTextOutput(JSON.stringify({ success: true }))
+          .setMimeType(ContentService.MimeType.JSON);
+      } else {
+        return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'אימייל או סיסמה שגויים' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
     const result = {
       customers: readSheet(ss, 'customers'),
       features: readSheet(ss, 'features'),

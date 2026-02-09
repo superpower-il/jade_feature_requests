@@ -704,20 +704,9 @@
             errorEl.style.display = 'none';
 
             try {
-                const resp = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'login', mail: email, password: password })
-                });
-                const text = await resp.text();
-                console.log('Login response:', resp.status, text);
-                let result;
-                try { result = JSON.parse(text); } catch(pe) {
-                    errorEl.textContent = 'שגיאה: התשובה מהשרת לא תקינה (status ' + resp.status + ')';
-                    errorEl.style.display = 'block';
-                    return;
-                }
+                const loginUrl = GOOGLE_SCRIPT_URL + '?action=login&mail=' + encodeURIComponent(email) + '&password=' + encodeURIComponent(password);
+                const resp = await fetch(loginUrl);
+                const result = await resp.json();
 
                 if (result.success) {
                     sessionStorage.setItem('loggedInUser', email);
