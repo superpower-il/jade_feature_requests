@@ -33,7 +33,7 @@ function doGet(e) {
 
     // Version check
     if (params.action === 'version') {
-      return ContentService.createTextOutput(JSON.stringify({ version: '2.0' }))
+      return ContentService.createTextOutput(JSON.stringify({ version: '3.0' }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 

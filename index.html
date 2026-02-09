@@ -1093,6 +1093,9 @@
                 if (!result.success) throw new Error(result.error || 'שגיאה בסנכרון');
 
                 const allRecords = result.data;
+                if (!Array.isArray(allRecords)) {
+                    throw new Error('יש לעדכן את Google Apps Script לגרסה 3.0 (Deploy > Manage deployments > New version)');
+                }
                 statusEl.textContent = `עיבוד ${allRecords.length} לקוחות...`;
 
                 // Update customers data
