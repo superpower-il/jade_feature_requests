@@ -1,5 +1,7 @@
 /*
   ============================================================
+  VERSION: 2.0 - LOGIN SUPPORT
+  ============================================================
   הוראות התקנה - Google Apps Script
   ============================================================
 
@@ -28,6 +30,12 @@ function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const params = e.parameter || {};
+
+    // Version check
+    if (params.action === 'version') {
+      return ContentService.createTextOutput(JSON.stringify({ version: '2.0' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
     // Login action via GET
     if (params.action === 'login') {
