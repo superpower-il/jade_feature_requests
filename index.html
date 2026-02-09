@@ -574,10 +574,10 @@
             
             <div class="api-setup" style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                    <strong>סנכרון לקוחות מ-Powerlink CRM</strong>
+                    <strong>סנכרון לקוחות מ-Fireberry CRM</strong>
                     <div id="sync-status" style="font-size: 13px; color: #666; margin-top: 4px;"></div>
                 </div>
-                <button class="btn-primary" onclick="syncCustomers()" id="sync-btn">🔄 סנכרון מ-Powerlink</button>
+                <button class="btn-primary" onclick="syncCustomers()" id="sync-btn">🔄 סנכרון מ-Fireberry</button>
             </div>
             
             <div class="sync-info" id="sync-info">טרם בוצע סנכרון</div>
@@ -964,7 +964,7 @@
 
             tbody.innerHTML = filtered.map(c => {
                 const requestCount = requestsData.requests.filter(r => r.customerId === c.id).length;
-                const sourceLabel = c.source === 'powerlink' ? '🔗 Powerlink' : c.source === 'fireberry' ? '🔥 Fireberry' : '✏️ ידני';
+                const sourceLabel = c.source === 'powerlink' ? '🔥 Fireberry' : c.source === 'fireberry' ? '🔥 Fireberry' : '✏️ ידני';
                 return `
                     <tr>
                         <td><strong>${c.name}</strong></td>
@@ -1134,7 +1134,7 @@
                 alert('שגיאה בסנכרון: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = '🔄 סנכרון מ-Powerlink';
+                btn.textContent = '🔄 סנכרון מ-Fireberry';
             }
         }
         
