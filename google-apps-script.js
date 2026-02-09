@@ -73,10 +73,10 @@ function doGet(e) {
             sort_type: 'asc'
           })
         });
-        var result = JSON.parse(resp.getContentText());
-        if (!result.success) throw new Error(result.message || 'Powerlink API error');
-        allRecords = allRecords.concat(result.data.Data || []);
-        isLastPage = result.data.IsLastPage;
+        var plResult = JSON.parse(resp.getContentText());
+        if (!plResult.success) throw new Error(plResult.message || 'Powerlink API error');
+        allRecords = allRecords.concat(plResult.data.Data || []);
+        isLastPage = plResult.data.IsLastPage;
         pageNumber++;
       }
 
