@@ -584,16 +584,6 @@
             
             <div class="form-row">
                 <div class="form-group flex-1">
-                    <label>הוספת לקוח ידנית</label>
-                    <input type="text" id="manual-customer-name" placeholder="שם הלקוח">
-                </div>
-                <div class="form-group">
-                    <button class="btn-success" onclick="addManualCustomer()">➕ הוסף</button>
-                </div>
-            </div>
-            
-            <div class="form-row" style="margin-top: 15px;">
-                <div class="form-group flex-1">
                     <input type="text" id="customer-search" placeholder="🔍 חיפוש לקוח..." oninput="renderCustomers()">
                 </div>
             </div>
@@ -1050,23 +1040,6 @@
             renderAll();
             saveData('features.json', featuresData);
             saveData('requests.json', requestsData);
-        }
-        
-        // Add manual customer
-        function addManualCustomer() {
-            const name = document.getElementById('manual-customer-name').value.trim();
-            if (!name) return alert('נא להזין שם לקוח');
-            
-            const customer = {
-                id: 'c_' + Date.now(),
-                name,
-                source: 'manual'
-            };
-            
-            customersData.customers.push(customer);
-            document.getElementById('manual-customer-name').value = '';
-            renderAll();
-            saveData('customers.json', customersData);
         }
         
         // Delete customer
