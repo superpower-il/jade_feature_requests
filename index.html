@@ -245,6 +245,9 @@
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .stats-grid {
@@ -451,6 +454,188 @@
         .clickable:hover {
             text-decoration: underline;
         }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cards-container {
+            display: none;
+        }
+
+        .card-item {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .card-item-header {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .card-item-row .label {
+            font-weight: 500;
+            color: #888;
+        }
+
+        .card-item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .panel {
+                padding: 20px;
+            }
+
+            .form-row {
+                flex-wrap: wrap;
+            }
+
+            .form-group.flex-1 {
+                min-width: 200px;
+            }
+
+            .feature-bar-name {
+                width: 140px;
+            }
+
+            .login-card {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin-bottom: 15px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .api-setup {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group,
+            .form-group.flex-1 {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .feature-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .feature-bar-name {
+                width: 100%;
+            }
+
+            .login-card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .stat-number {
+                font-size: 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .modal {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .panel table {
+                display: none;
+            }
+
+            .cards-container {
+                display: block;
+            }
+
+            .tabs {
+                gap: 5px;
+            }
+
+            .tab {
+                padding: 8px 12px;
+                font-size: 13px;
+                flex: 1;
+                text-align: center;
+            }
+
+            .login-screen {
+                margin: -5px;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -473,7 +658,7 @@
     </div>
 
     <div class="container" id="app-container" style="display:none">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="app-header">
             <h1>🎯 ניהול Feature Requests</h1>
             <button class="btn-secondary btn-small" onclick="logout()">🚪 התנתק</button>
         </div>
@@ -566,13 +751,14 @@
                 </thead>
                 <tbody id="features-table"></tbody>
             </table>
+            <div class="cards-container" id="features-cards"></div>
         </div>
         
         <!-- Customers Panel -->
         <div id="customers" class="panel">
             <h2>לקוחות</h2>
             
-            <div class="api-setup" style="display: flex; align-items: center; justify-content: space-between;">
+            <div class="api-setup">
                 <div>
                     <strong>סנכרון לקוחות מ-Fireberry CRM</strong>
                     <div id="sync-status" style="font-size: 13px; color: #666; margin-top: 4px;"></div>
@@ -602,6 +788,7 @@
                 </thead>
                 <tbody id="customers-table"></tbody>
             </table>
+            <div class="cards-container" id="customers-cards"></div>
         </div>
         
         <!-- Requests Panel -->
@@ -656,6 +843,7 @@
                 </thead>
                 <tbody id="requests-table"></tbody>
             </table>
+            <div class="cards-container" id="requests-cards"></div>
         </div>
     </div>
     
@@ -893,20 +1081,23 @@
         // Features
         function renderFeatures() {
             const tbody = document.getElementById('features-table');
-            
+            const cardsContainer = document.getElementById('features-cards');
+
             if (!featuresData.features.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="no-data">אין פיצ\'רים</td></tr>';
+                cardsContainer.innerHTML = '<div class="no-data">אין פיצ\'רים</div>';
                 return;
             }
-            
-            tbody.innerHTML = featuresData.features.map(f => {
+
+            const featuresHtml = featuresData.features.map(f => {
                 const requests = requestsData.requests.filter(r => r.featureId === f.id);
                 const customerNames = requests.map(r => {
                     const customer = customersData.customers.find(c => c.id === r.customerId);
                     return customer ? customer.name : 'לקוח לא ידוע';
                 });
-                
-                return `
+
+                return {
+                    tableRow: `
                     <tr>
                         <td><strong>${f.name}</strong></td>
                         <td>${f.description || '-'}</td>
@@ -920,14 +1111,31 @@
                             <button class="btn-primary btn-small" onclick="openAssignModal('${f.id}')">👥 שיוך</button>
                             <button class="btn-danger btn-small" onclick="deleteFeature('${f.id}')">🗑️</button>
                         </td>
-                    </tr>
-                `;
-            }).join('');
+                    </tr>`,
+                    card: `<div class="card-item">
+                        <div class="card-item-header">
+                            <span>${f.name}</span>
+                            <span class="status-badge status-${f.status}">${statusLabels[f.status]}</span>
+                        </div>
+                        <div class="card-item-row"><span class="label">קטגוריה</span><span>${categoryLabels[f.category]}</span></div>
+                        <div class="card-item-row"><span class="label">לקוחות</span><span>${requests.length}</span></div>
+                        ${f.description ? `<div class="card-item-row"><span class="label">תיאור</span><span>${f.description}</span></div>` : ''}
+                        <div class="card-item-actions">
+                            <button class="btn-primary btn-small" onclick="openAssignModal('${f.id}')">👥 שיוך</button>
+                            <button class="btn-danger btn-small" onclick="deleteFeature('${f.id}')">🗑️</button>
+                        </div>
+                    </div>`
+                };
+            });
+
+            tbody.innerHTML = featuresHtml.map(h => h.tableRow).join('');
+            cardsContainer.innerHTML = featuresHtml.map(h => h.card).join('');
         }
         
         // Customers
         function renderCustomers() {
             const tbody = document.getElementById('customers-table');
+            const cardsContainer = document.getElementById('customers-cards');
             const syncInfo = document.getElementById('sync-info');
 
             if (customersData.lastSync) {
@@ -936,6 +1144,7 @@
 
             if (!customersData.customers.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="no-data">אין לקוחות</td></tr>';
+                cardsContainer.innerHTML = '<div class="no-data">אין לקוחות</div>';
                 return;
             }
 
@@ -952,10 +1161,11 @@
                 );
             }
 
-            tbody.innerHTML = filtered.map(c => {
+            const customersHtml = filtered.map(c => {
                 const requestCount = requestsData.requests.filter(r => r.customerId === c.id).length;
                 const sourceLabel = c.source === 'powerlink' ? '🔥 Fireberry' : c.source === 'fireberry' ? '🔥 Fireberry' : '✏️ ידני';
-                return `
+                return {
+                    tableRow: `
                     <tr>
                         <td><strong>${c.name}</strong></td>
                         <td style="direction: ltr; text-align: right;">${c.phone || '-'}</td>
@@ -966,25 +1176,44 @@
                         <td>
                             <button class="btn-danger btn-small" onclick="deleteCustomer('${c.id}')">🗑️</button>
                         </td>
-                    </tr>
-                `;
-            }).join('');
+                    </tr>`,
+                    card: `<div class="card-item">
+                        <div class="card-item-header">
+                            <span>${c.name}</span>
+                            <span>${sourceLabel}</span>
+                        </div>
+                        ${c.phone ? `<div class="card-item-row"><span class="label">טלפון</span><span style="direction:ltr">${c.phone}</span></div>` : ''}
+                        ${c.email ? `<div class="card-item-row"><span class="label">אימייל</span><span style="direction:ltr">${c.email}</span></div>` : ''}
+                        ${c.accountNumber ? `<div class="card-item-row"><span class="label">מס' לקוח</span><span>${c.accountNumber}</span></div>` : ''}
+                        <div class="card-item-row"><span class="label">פיצ'רים מבוקשים</span><span>${requestCount}</span></div>
+                        <div class="card-item-actions">
+                            <button class="btn-danger btn-small" onclick="deleteCustomer('${c.id}')">🗑️</button>
+                        </div>
+                    </div>`
+                };
+            });
+
+            tbody.innerHTML = customersHtml.map(h => h.tableRow).join('');
+            cardsContainer.innerHTML = customersHtml.map(h => h.card).join('');
         }
         
         // Requests
         function renderRequests() {
             const tbody = document.getElementById('requests-table');
-            
+            const cardsContainer = document.getElementById('requests-cards');
+
             if (!requestsData.requests.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="no-data">אין בקשות</td></tr>';
+                cardsContainer.innerHTML = '<div class="no-data">אין בקשות</div>';
                 return;
             }
-            
-            tbody.innerHTML = requestsData.requests.map(r => {
+
+            const requestsHtml = requestsData.requests.map(r => {
                 const customer = customersData.customers.find(c => c.id === r.customerId);
                 const feature = featuresData.features.find(f => f.id === r.featureId);
-                
-                return `
+
+                return {
+                    tableRow: `
                     <tr>
                         <td>${customer ? customer.name : 'לא נמצא'}</td>
                         <td>${feature ? feature.name : 'לא נמצא'}</td>
@@ -994,9 +1223,24 @@
                         <td>
                             <button class="btn-danger btn-small" onclick="deleteRequest('${r.id}')">🗑️</button>
                         </td>
-                    </tr>
-                `;
-            }).join('');
+                    </tr>`,
+                    card: `<div class="card-item">
+                        <div class="card-item-header">
+                            <span>${customer ? customer.name : 'לא נמצא'}</span>
+                            <span class="priority-badge priority-${r.priority}">${r.priority}</span>
+                        </div>
+                        <div class="card-item-row"><span class="label">פיצ'ר</span><span>${feature ? feature.name : 'לא נמצא'}</span></div>
+                        <div class="card-item-row"><span class="label">תאריך</span><span>${new Date(r.date).toLocaleDateString('he-IL')}</span></div>
+                        ${r.notes ? `<div class="card-item-row"><span class="label">הערות</span><span>${r.notes}</span></div>` : ''}
+                        <div class="card-item-actions">
+                            <button class="btn-danger btn-small" onclick="deleteRequest('${r.id}')">🗑️</button>
+                        </div>
+                    </div>`
+                };
+            });
+
+            tbody.innerHTML = requestsHtml.map(h => h.tableRow).join('');
+            cardsContainer.innerHTML = requestsHtml.map(h => h.card).join('');
         }
         
         // Populate selects
