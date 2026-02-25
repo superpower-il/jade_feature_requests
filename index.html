@@ -769,12 +769,6 @@
             
             <div class="sync-info" id="sync-info">טרם בוצע סנכרון</div>
             
-            <div class="form-row">
-                <div class="form-group flex-1">
-                    <input type="text" id="customer-search" placeholder="🔍 חיפוש לקוח..." oninput="renderCustomers()">
-                </div>
-            </div>
-
             <table>
                 <thead>
                     <tr>
@@ -798,6 +792,7 @@
             <div class="form-row">
                 <div class="form-group flex-1">
                     <label>לקוח</label>
+                    <input type="text" id="customer-filter" placeholder="🔍 סנן לקוחות..." oninput="filterCustomerSelect()">
                     <select id="request-customer">
                         <option value="">בחר לקוח...</option>
                     </select>
@@ -1149,20 +1144,7 @@
                 return;
             }
 
-            const searchInput = document.getElementById('customer-search');
-            const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-            let filtered = customersData.customers;
-            if (searchTerm) {
-                filtered = filtered.filter(c =>
-                    (c.name || '').toLowerCase().includes(searchTerm) ||
-                    (c.phone || '').includes(searchTerm) ||
-                    (c.email || '').toLowerCase().includes(searchTerm) ||
-                    (c.accountNumber || '').includes(searchTerm)
-                );
-            }
-
-            const customersHtml = filtered.map(c => {
+            const customersHtml = customersData.customers.map(c => {
                 const requestCount = requestsData.requests.filter(r => r.customerId === c.id).length;
                 const sourceLabel = c.source === 'powerlink' ? '🔥 Fireberry' : c.source === 'fireberry' ? '🔥 Fireberry' : '✏️ ידני';
                 return {
@@ -1240,14 +1222,25 @@
         
         // Populate selects
         function populateSelects() {
-            const customerSelect = document.getElementById('request-customer');
+            filterCustomerSelect();
             const featureSelect = document.getElementById('request-feature');
-            
-            customerSelect.innerHTML = '<option value="">בחר לקוח...</option>' + 
-                customersData.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            
-            featureSelect.innerHTML = '<option value="">בחר פיצ\'ר...</option>' + 
+
+            featureSelect.innerHTML = '<option value="">בחר פיצ\'ר...</option>' +
                 featuresData.features.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        }
+
+        function filterCustomerSelect() {
+            const term = (document.getElementById('customer-filter').value || '').trim().toLowerCase();
+            const select = document.getElementById('request-customer');
+            const filtered = customersData.customers.filter(c =>
+                !term ||
+                (c.name || '').toLowerCase().includes(term) ||
+                (c.phone || '').includes(term) ||
+                (c.email || '').toLowerCase().includes(term) ||
+                (c.accountNumber || '').includes(term)
+            );
+            select.innerHTML = '<option value="">בחר לקוח...</option>' +
+                filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
         
         // Add feature
