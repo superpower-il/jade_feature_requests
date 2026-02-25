@@ -99,6 +99,60 @@
             outline: none;
             border-color: #3498db;
         }
+
+        .autocomplete-wrapper {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background: #ebf5fb;
+        }
+
+        .autocomplete-item .ac-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .autocomplete-item .ac-details {
+            font-size: 12px;
+            color: #888;
+            direction: ltr;
+            text-align: left;
+        }
         
         button {
             padding: 10px 20px;
@@ -770,7 +824,10 @@
             
             <div class="form-row">
                 <div class="form-group flex-1">
-                    <input type="text" id="customer-search" placeholder="🔍 חיפוש לקוח..." oninput="renderCustomers()">
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="customer-search" placeholder="🔍 חיפוש לקוח..." oninput="onCustomerSearch()" onkeydown="onCustomerSearchKeydown(event)" autocomplete="off">
+                        <div class="autocomplete-dropdown" id="customer-autocomplete"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1132,6 +1189,108 @@
             cardsContainer.innerHTML = featuresHtml.map(h => h.card).join('');
         }
         
+        // Customer autocomplete
+        let acActiveIndex = -1;
+
+        function onCustomerSearch() {
+            const input = document.getElementById('customer-search');
+            const dropdown = document.getElementById('customer-autocomplete');
+            const term = input.value.trim().toLowerCase();
+
+            renderCustomers();
+
+            if (!term || term.length < 1) {
+                dropdown.classList.remove('show');
+                acActiveIndex = -1;
+                return;
+            }
+
+            const matches = customersData.customers.filter(c =>
+                (c.name || '').toLowerCase().includes(term) ||
+                (c.phone || '').includes(term) ||
+                (c.email || '').toLowerCase().includes(term) ||
+                (c.accountNumber || '').includes(term)
+            ).slice(0, 8);
+
+            if (!matches.length) {
+                dropdown.classList.remove('show');
+                acActiveIndex = -1;
+                return;
+            }
+
+            acActiveIndex = -1;
+            dropdown.innerHTML = matches.map((c, i) => {
+                const detail = c.phone || c.email || c.accountNumber || '';
+                return `<div class="autocomplete-item" data-index="${i}" onmousedown="selectCustomerAc('${c.name.replace(/'/g, "\\'")}')">
+                    <span class="ac-name">${highlightMatch(c.name, term)}</span>
+                    <span class="ac-details">${detail}</span>
+                </div>`;
+            }).join('');
+            dropdown.classList.add('show');
+        }
+
+        function highlightMatch(text, term) {
+            const idx = text.toLowerCase().indexOf(term);
+            if (idx === -1) return text;
+            return text.substring(0, idx) + '<strong style="color:#3498db">' + text.substring(idx, idx + term.length) + '</strong>' + text.substring(idx + term.length);
+        }
+
+        function selectCustomerAc(name) {
+            const input = document.getElementById('customer-search');
+            const dropdown = document.getElementById('customer-autocomplete');
+            input.value = name;
+            dropdown.classList.remove('show');
+            acActiveIndex = -1;
+            renderCustomers();
+        }
+
+        function onCustomerSearchKeydown(e) {
+            const dropdown = document.getElementById('customer-autocomplete');
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+
+            if (!dropdown.classList.contains('show') || !items.length) {
+                if (e.key === 'Escape') {
+                    document.getElementById('customer-search').value = '';
+                    renderCustomers();
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                acActiveIndex = Math.min(acActiveIndex + 1, items.length - 1);
+                updateAcActive(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                acActiveIndex = Math.max(acActiveIndex - 1, 0);
+                updateAcActive(items);
+            } else if (e.key === 'Enter' && acActiveIndex >= 0) {
+                e.preventDefault();
+                items[acActiveIndex].dispatchEvent(new Event('mousedown'));
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('show');
+                acActiveIndex = -1;
+            }
+        }
+
+        function updateAcActive(items) {
+            items.forEach((item, i) => {
+                item.classList.toggle('active', i === acActiveIndex);
+            });
+            if (acActiveIndex >= 0 && items[acActiveIndex]) {
+                items[acActiveIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Close autocomplete on click outside
+        document.addEventListener('click', function(e) {
+            const wrapper = document.querySelector('.autocomplete-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('customer-autocomplete').classList.remove('show');
+                acActiveIndex = -1;
+            }
+        });
+
         // Customers
         function renderCustomers() {
             const tbody = document.getElementById('customers-table');
