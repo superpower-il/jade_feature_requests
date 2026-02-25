@@ -102,6 +102,11 @@
 
         .autocomplete-wrapper {
             position: relative;
+            width: 100%;
+        }
+
+        .autocomplete-wrapper input {
+            width: 100%;
         }
 
         .autocomplete-dropdown {
@@ -1191,6 +1196,7 @@
         
         // Customer autocomplete
         let acActiveIndex = -1;
+        let acMatches = [];
 
         function onCustomerSearch() {
             const input = document.getElementById('customer-search');
@@ -1199,30 +1205,32 @@
 
             renderCustomers();
 
-            if (!term || term.length < 1) {
+            if (!term) {
                 dropdown.classList.remove('show');
                 acActiveIndex = -1;
+                acMatches = [];
                 return;
             }
 
-            const matches = customersData.customers.filter(c =>
+            acMatches = customersData.customers.filter(c =>
                 (c.name || '').toLowerCase().includes(term) ||
                 (c.phone || '').includes(term) ||
                 (c.email || '').toLowerCase().includes(term) ||
                 (c.accountNumber || '').includes(term)
             ).slice(0, 8);
 
-            if (!matches.length) {
+            if (!acMatches.length) {
                 dropdown.classList.remove('show');
                 acActiveIndex = -1;
                 return;
             }
 
             acActiveIndex = -1;
-            dropdown.innerHTML = matches.map((c, i) => {
+            dropdown.innerHTML = acMatches.map((c, i) => {
+                const name = c.name || '';
                 const detail = c.phone || c.email || c.accountNumber || '';
-                return `<div class="autocomplete-item" data-index="${i}" onmousedown="selectCustomerAc('${c.name.replace(/'/g, "\\'")}')">
-                    <span class="ac-name">${highlightMatch(c.name, term)}</span>
+                return `<div class="autocomplete-item" data-index="${i}">
+                    <span class="ac-name">${highlightMatch(name, term)}</span>
                     <span class="ac-details">${detail}</span>
                 </div>`;
             }).join('');
@@ -1230,19 +1238,31 @@
         }
 
         function highlightMatch(text, term) {
+            if (!text) return '';
             const idx = text.toLowerCase().indexOf(term);
             if (idx === -1) return text;
             return text.substring(0, idx) + '<strong style="color:#3498db">' + text.substring(idx, idx + term.length) + '</strong>' + text.substring(idx + term.length);
         }
 
-        function selectCustomerAc(name) {
+        function selectCustomerAc(index) {
             const input = document.getElementById('customer-search');
             const dropdown = document.getElementById('customer-autocomplete');
-            input.value = name;
+            if (acMatches[index]) {
+                input.value = acMatches[index].name || '';
+            }
             dropdown.classList.remove('show');
             acActiveIndex = -1;
             renderCustomers();
         }
+
+        // Event delegation for autocomplete clicks
+        document.getElementById('customer-autocomplete').addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.autocomplete-item');
+            if (item) {
+                e.preventDefault();
+                selectCustomerAc(parseInt(item.dataset.index));
+            }
+        });
 
         function onCustomerSearchKeydown(e) {
             const dropdown = document.getElementById('customer-autocomplete');
@@ -1266,7 +1286,7 @@
                 updateAcActive(items);
             } else if (e.key === 'Enter' && acActiveIndex >= 0) {
                 e.preventDefault();
-                items[acActiveIndex].dispatchEvent(new Event('mousedown'));
+                selectCustomerAc(acActiveIndex);
             } else if (e.key === 'Escape') {
                 dropdown.classList.remove('show');
                 acActiveIndex = -1;
