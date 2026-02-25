@@ -784,7 +784,6 @@
                         <th>מס' לקוח</th>
                         <th>מקור</th>
                         <th>פיצ'רים מבוקשים</th>
-                        <th>פעולות</th>
                     </tr>
                 </thead>
                 <tbody id="customers-table"></tbody>
@@ -1145,7 +1144,7 @@
             }
 
             if (!customersData.customers.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="no-data">אין לקוחות</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="no-data">אין לקוחות</td></tr>';
                 cardsContainer.innerHTML = '<div class="no-data">אין לקוחות</div>';
                 return;
             }
@@ -1175,9 +1174,6 @@
                         <td>${c.accountNumber || '-'}</td>
                         <td>${sourceLabel}</td>
                         <td>${requestCount}</td>
-                        <td>
-                            <button class="btn-danger btn-small" onclick="deleteCustomer('${c.id}')">🗑️</button>
-                        </td>
                     </tr>`,
                     card: `<div class="card-item">
                         <div class="card-item-header">
@@ -1188,9 +1184,6 @@
                         ${c.email ? `<div class="card-item-row"><span class="label">אימייל</span><span style="direction:ltr">${c.email}</span></div>` : ''}
                         ${c.accountNumber ? `<div class="card-item-row"><span class="label">מס' לקוח</span><span>${c.accountNumber}</span></div>` : ''}
                         <div class="card-item-row"><span class="label">פיצ'רים מבוקשים</span><span>${requestCount}</span></div>
-                        <div class="card-item-actions">
-                            <button class="btn-danger btn-small" onclick="deleteCustomer('${c.id}')">🗑️</button>
-                        </div>
                     </div>`
                 };
             });
@@ -1285,16 +1278,6 @@
             requestsData.requests = requestsData.requests.filter(r => r.featureId !== id);
             renderAll();
             saveData('features.json', featuresData);
-            saveData('requests.json', requestsData);
-        }
-        
-        // Delete customer
-        function deleteCustomer(id) {
-            if (!confirm('למחוק את הלקוח?')) return;
-            customersData.customers = customersData.customers.filter(c => c.id !== id);
-            requestsData.requests = requestsData.requests.filter(r => r.customerId !== id);
-            renderAll();
-            saveData('customers.json', customersData);
             saveData('requests.json', requestsData);
         }
         
