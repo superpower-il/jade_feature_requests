@@ -792,10 +792,9 @@
             <div class="form-row">
                 <div class="form-group flex-1">
                     <label>לקוח</label>
-                    <input type="text" id="customer-filter" placeholder="🔍 סנן לקוחות..." oninput="filterCustomerSelect()">
-                    <select id="request-customer">
-                        <option value="">בחר לקוח...</option>
-                    </select>
+                    <input type="text" id="request-customer-input" list="request-customer-list" placeholder="🔍 הקלד שם לקוח..." oninput="onCustomerInput()">
+                    <datalist id="request-customer-list"></datalist>
+                    <input type="hidden" id="request-customer" value="">
                 </div>
                 <div class="form-group flex-1">
                     <label>פיצ'ר</label>
@@ -1222,25 +1221,26 @@
         
         // Populate selects
         function populateSelects() {
-            filterCustomerSelect();
-            const featureSelect = document.getElementById('request-feature');
+            const datalist = document.getElementById('request-customer-list');
+            datalist.innerHTML = customersData.customers.map(c => {
+                const name = (c.name || '').replace(/"/g, '&quot;');
+                const detail = c.accountNumber || c.phone || '';
+                return detail
+                    ? '<option value="' + name + '" label="' + detail + '">'
+                    : '<option value="' + name + '">';
+            }).join('');
 
+            const featureSelect = document.getElementById('request-feature');
             featureSelect.innerHTML = '<option value="">בחר פיצ\'ר...</option>' +
                 featuresData.features.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
         }
 
-        function filterCustomerSelect() {
-            const term = (document.getElementById('customer-filter').value || '').trim().toLowerCase();
-            const select = document.getElementById('request-customer');
-            const filtered = customersData.customers.filter(c =>
-                !term ||
-                (c.name || '').toLowerCase().includes(term) ||
-                (c.phone || '').includes(term) ||
-                (c.email || '').toLowerCase().includes(term) ||
-                (c.accountNumber || '').includes(term)
-            );
-            select.innerHTML = '<option value="">בחר לקוח...</option>' +
-                filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        function onCustomerInput() {
+            const input = document.getElementById('request-customer-input');
+            const hidden = document.getElementById('request-customer');
+            const val = input.value.trim();
+            const customer = customersData.customers.find(c => c.name === val);
+            hidden.value = customer ? customer.id : '';
         }
         
         // Add feature
@@ -1355,6 +1355,8 @@
             };
             
             requestsData.requests.push(request);
+            document.getElementById('request-customer-input').value = '';
+            document.getElementById('request-customer').value = '';
             document.getElementById('request-notes').value = '';
             renderAll();
             saveData('requests.json', requestsData);
