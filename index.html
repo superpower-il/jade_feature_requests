@@ -771,8 +771,7 @@
             
             <div class="form-row">
                 <div class="form-group flex-1">
-                    <input type="text" id="customer-search" list="customer-datalist" placeholder="🔍 חיפוש לקוח..." oninput="renderCustomers()">
-                    <datalist id="customer-datalist"></datalist>
+                    <input type="text" id="customer-search" placeholder="🔍 חיפוש לקוח..." oninput="renderCustomers()">
                 </div>
             </div>
 
@@ -1044,7 +1043,6 @@
             renderCustomers();
             renderRequests();
             populateSelects();
-            updateCustomerDatalist();
         }
         
         // Dashboard
@@ -1135,17 +1133,6 @@
             cardsContainer.innerHTML = featuresHtml.map(h => h.card).join('');
         }
         
-        // Populate customer datalist for autocomplete
-        function updateCustomerDatalist() {
-            const datalist = document.getElementById('customer-datalist');
-            if (!datalist) return;
-            datalist.innerHTML = customersData.customers.map(c => {
-                const name = c.name || '';
-                const detail = c.phone || c.accountNumber || '';
-                const label = detail ? name + ' — ' + detail : name;
-                return '<option value="' + name.replace(/"/g, '&quot;') + '" label="' + label.replace(/"/g, '&quot;') + '">';
-            }).join('');
-        }
 
         // Customers
         function renderCustomers() {
