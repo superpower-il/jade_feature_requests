@@ -643,6 +643,7 @@
     <!-- Login Screen -->
     <div class="login-screen" id="login-screen">
         <div class="login-card">
+            <img src="Jade logo.webp" alt="Jade Logo" style="width: 120px; border-radius: 20px; margin-bottom: 20px;">
             <h1>🔐 התחברות</h1>
             <p>ניהול Feature Requests</p>
             <div class="form-group">
@@ -892,6 +893,40 @@
             <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeEditFeatureModal()">ביטול</button>
                 <button class="btn-primary" onclick="saveEditFeature()">שמור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Request Modal -->
+    <div class="modal-overlay" id="edit-request-modal">
+        <div class="modal">
+            <h2>✏️ עריכת בקשה</h2>
+            <input type="hidden" id="edit-request-id">
+            <div class="form-group">
+                <label>לקוח</label>
+                <input type="text" id="edit-request-customer-name" disabled>
+            </div>
+            <div class="form-group">
+                <label>פיצ'ר</label>
+                <select id="edit-request-feature"></select>
+            </div>
+            <div class="form-group">
+                <label>עדיפות</label>
+                <select id="edit-request-priority">
+                    <option value="1">1 - נמוכה</option>
+                    <option value="2">2 - נמוכה-בינונית</option>
+                    <option value="3">3 - בינונית</option>
+                    <option value="4">4 - גבוהה</option>
+                    <option value="5">5 - קריטית</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>הערות</label>
+                <textarea id="edit-request-notes" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeEditRequestModal()">ביטול</button>
+                <button class="btn-primary" onclick="saveEditRequest()">שמור</button>
             </div>
         </div>
     </div>
@@ -1241,6 +1276,7 @@
                         <td>${new Date(r.date).toLocaleDateString('he-IL')}</td>
                         <td>${r.notes || '-'}</td>
                         <td>
+                            <button class="btn-primary btn-small" onclick="openEditRequestModal('${r.id}')">✏️ עריכה</button>
                             <button class="btn-danger btn-small" onclick="deleteRequest('${r.id}')">🗑️</button>
                         </td>
                     </tr>`,
@@ -1253,6 +1289,7 @@
                         <div class="card-item-row"><span class="label">תאריך</span><span>${new Date(r.date).toLocaleDateString('he-IL')}</span></div>
                         ${r.notes ? `<div class="card-item-row"><span class="label">הערות</span><span>${r.notes}</span></div>` : ''}
                         <div class="card-item-actions">
+                            <button class="btn-primary btn-small" onclick="openEditRequestModal('${r.id}')">✏️ עריכה</button>
                             <button class="btn-danger btn-small" onclick="deleteRequest('${r.id}')">🗑️</button>
                         </div>
                     </div>`
@@ -1447,7 +1484,40 @@
             renderAll();
             saveData('requests.json', requestsData);
         }
-        
+
+        // Edit request modal
+        function openEditRequestModal(id) {
+            const request = requestsData.requests.find(r => r.id === id);
+            if (!request) return;
+            const customer = customersData.customers.find(c => c.id === request.customerId);
+
+            document.getElementById('edit-request-id').value = id;
+            document.getElementById('edit-request-customer-name').value = customer ? customer.name : 'לא נמצא';
+            document.getElementById('edit-request-feature').innerHTML =
+                featuresData.features.map(f => `<option value="${f.id}" ${f.id === request.featureId ? 'selected' : ''}>${f.name}</option>`).join('');
+            document.getElementById('edit-request-priority').value = request.priority;
+            document.getElementById('edit-request-notes').value = request.notes || '';
+            document.getElementById('edit-request-modal').classList.add('active');
+        }
+
+        function closeEditRequestModal() {
+            document.getElementById('edit-request-modal').classList.remove('active');
+        }
+
+        function saveEditRequest() {
+            const id = document.getElementById('edit-request-id').value;
+            const request = requestsData.requests.find(r => r.id === id);
+            if (!request) return;
+
+            request.featureId = document.getElementById('edit-request-feature').value;
+            request.priority = parseInt(document.getElementById('edit-request-priority').value);
+            request.notes = document.getElementById('edit-request-notes').value.trim();
+
+            closeEditRequestModal();
+            renderAll();
+            saveData('requests.json', requestsData);
+        }
+
         // Assign modal
         function openAssignModal(featureId) {
             currentAssignFeatureId = featureId;
