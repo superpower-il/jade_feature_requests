@@ -854,6 +854,48 @@
         </div>
     </div>
 
+    <!-- Edit Feature Modal -->
+    <div class="modal-overlay" id="edit-feature-modal">
+        <div class="modal">
+            <h2>✏️ עריכת פיצ'ר</h2>
+            <input type="hidden" id="edit-feature-id">
+            <div class="form-group">
+                <label>שם הפיצ'ר</label>
+                <input type="text" id="edit-feature-name">
+            </div>
+            <div class="form-group">
+                <label>תיאור</label>
+                <textarea id="edit-feature-description" rows="3"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group flex-1">
+                    <label>סטטוס</label>
+                    <select id="edit-feature-status">
+                        <option value="idea">💡 רעיון</option>
+                        <option value="review">🔍 בבחינה</option>
+                        <option value="development">🚧 בפיתוח</option>
+                        <option value="done">✅ הושלם</option>
+                        <option value="rejected">❌ נדחה</option>
+                    </select>
+                </div>
+                <div class="form-group flex-1">
+                    <label>קטגוריה</label>
+                    <select id="edit-feature-category">
+                        <option value="ux">UX</option>
+                        <option value="integrations">אינטגרציות</option>
+                        <option value="reports">דוחות</option>
+                        <option value="automation">אוטומציה</option>
+                        <option value="other">אחר</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeEditFeatureModal()">ביטול</button>
+                <button class="btn-primary" onclick="saveEditFeature()">שמור</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== Google Sheets Config =====
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwixix2W8wMBWiBsf7zjo1-owDCfDczcZMgLkPq7eF5XHvCIi_ftW8gG15jIiPlglUUNQ/exec';
@@ -1102,6 +1144,7 @@
                             ${customerNames.length ? `<br><small>${customerNames.slice(0, 3).join(', ')}${customerNames.length > 3 ? '...' : ''}</small>` : ''}
                         </td>
                         <td>
+                            <button class="btn-primary btn-small" onclick="openEditFeatureModal('${f.id}')">✏️ עריכה</button>
                             <button class="btn-primary btn-small" onclick="openAssignModal('${f.id}')">👥 שיוך</button>
                             <button class="btn-danger btn-small" onclick="deleteFeature('${f.id}')">🗑️</button>
                         </td>
@@ -1115,6 +1158,7 @@
                         <div class="card-item-row"><span class="label">לקוחות</span><span>${requests.length}</span></div>
                         ${f.description ? `<div class="card-item-row"><span class="label">תיאור</span><span>${f.description}</span></div>` : ''}
                         <div class="card-item-actions">
+                            <button class="btn-primary btn-small" onclick="openEditFeatureModal('${f.id}')">✏️ עריכה</button>
                             <button class="btn-primary btn-small" onclick="openAssignModal('${f.id}')">👥 שיוך</button>
                             <button class="btn-danger btn-small" onclick="deleteFeature('${f.id}')">🗑️</button>
                         </div>
@@ -1272,6 +1316,40 @@
             renderAll();
             saveData('features.json', featuresData);
             saveData('requests.json', requestsData);
+        }
+
+        // Edit feature modal
+        function openEditFeatureModal(id) {
+            const feature = featuresData.features.find(f => f.id === id);
+            if (!feature) return;
+            document.getElementById('edit-feature-id').value = id;
+            document.getElementById('edit-feature-name').value = feature.name;
+            document.getElementById('edit-feature-description').value = feature.description || '';
+            document.getElementById('edit-feature-status').value = feature.status;
+            document.getElementById('edit-feature-category').value = feature.category;
+            document.getElementById('edit-feature-modal').classList.add('active');
+        }
+
+        function closeEditFeatureModal() {
+            document.getElementById('edit-feature-modal').classList.remove('active');
+        }
+
+        function saveEditFeature() {
+            const id = document.getElementById('edit-feature-id').value;
+            const name = document.getElementById('edit-feature-name').value.trim();
+            if (!name) return alert('נא להזין שם פיצ\'ר');
+
+            const feature = featuresData.features.find(f => f.id === id);
+            if (!feature) return;
+
+            feature.name = name;
+            feature.description = document.getElementById('edit-feature-description').value.trim();
+            feature.status = document.getElementById('edit-feature-status').value;
+            feature.category = document.getElementById('edit-feature-category').value;
+
+            closeEditFeatureModal();
+            renderAll();
+            saveData('features.json', featuresData);
         }
         
         // Sync customers via Google Apps Script (server-side Powerlink API call)
